@@ -1,0 +1,5 @@
+torch
+torchaudio
+pyannote.audio
+pympi-ling
+git+https://github.com/michaelong7/minineedle.git
