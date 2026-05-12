@@ -3,7 +3,7 @@
 local="$(pwd -P)/local"
 
 usage="Usage: $0 [-h] [-o] [-d DIR] [-e DIR] [-o DIR] [-w NAT] [-a POSNUM] [-b NUM] [-l NNINT] [-t NUM] [-m NUM] [-s NAT] [-i DIR] [-r]"
-data=perrony_raw_data
+data=data/perrony_extracted
 exp=exp/mms
 out=eafs
 width=100
@@ -135,22 +135,23 @@ function split_file () {
         speaker_name="${utt_data[0]}"
         utt_start="${utt_data[1]}"
         utt_end="${utt_data[2]}"
+        text="${utt_data[3]}"
         printf -v output_name "%s_%08.0f_%08.0f_%s" \
              "$speaker_name" "$(bc -l <<< "$utt_start * 100")" "$(bc -l <<< "$utt_end * 100")" "$(sed 's/_w//' <<< $wav_name)"
         sox "$wav_file" -b 16 -r 16k -c 1 "$out_dir/$output_name.wav" trim "$utt_start" ="$utt_end"
-        echo "test" > "$out_dir/$output_name.txt"
+        echo "$text" > "$out_dir/$output_name.txt"
 
     done < "$file"
 }
 
 mkdir -p "$out_dir"
 
-for wav_file in "$data"/"$part"/*.mp3; do
-    tws_file="eafs/$(basename "$wav_file" .wav).tws"
-    split_file "$merge" "$wav_file" "$out_dir"
+for wav_file in "$data"/"$part"/*.wav; do
+    if ! [ -f "$out_dir/.done" ]; then
+        tws_file="$data/$(basename "$wav_file" .wav).tws"
+        split_file "$tws_file" "$wav_file" "$out_dir"
+    fi
 done
-
-exit 20
 
 :> "$out_dir/.done"
 
@@ -159,7 +160,7 @@ exit 20
 only=false
 dec_partitions=(HB_split)
 
-for part in HB_split; do
+for part in train; do
     if ! [ -f "$data/$part/metadata.csv" ]; then
         echo "Creating metadata.csv in '$data/$part'"
         mkdir -p "$data/$part"
